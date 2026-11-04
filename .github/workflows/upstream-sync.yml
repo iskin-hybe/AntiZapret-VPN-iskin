@@ -1,0 +1,91 @@
+name: Обновления от автора
+
+# Раз в день проверяет репозиторий автора оригинала (GubernievS/AntiZapret-VPN).
+# Если там есть новые коммиты — кладёт их копию в ветку upstream-sync
+# и открывает (или обновляет) pull request в main. Сам ничего не вливает.
+
+on:
+  schedule:
+    - cron: '23 5 * * *' # каждый день в 05:23 UTC (08:23 МСК)
+  workflow_dispatch: # ручной запуск со вкладки Actions
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      UPSTREAM_REPO: https://github.com/GubernievS/AntiZapret-VPN.git
+      UPSTREAM_BRANCH: main
+      SYNC_BRANCH: upstream-sync
+      BASE_BRANCH: main
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Получаем изменения автора
+        id: fetch
+        run: |
+          git remote add upstream "$UPSTREAM_REPO"
+          git fetch --no-tags upstream "$UPSTREAM_BRANCH"
+          NEW="$(git rev-list --count "HEAD..upstream/$UPSTREAM_BRANCH")"
+          echo "new=$NEW" >> "$GITHUB_OUTPUT"
+          echo "Новых коммитов у автора: $NEW"
+
+      - name: Открываем или обновляем pull request
+        if: steps.fetch.outputs.new != '0'
+        run: |
+          UP="upstream/$UPSTREAM_BRANCH"
+          NEW="${{ steps.fetch.outputs.new }}"
+
+          # Копия ветки автора в форке — из неё и делается pull request
+          git push --force origin "$UP:refs/heads/$SYNC_BRANCH"
+
+          {
+            echo "У автора оригинала новых коммитов: **$NEW**."
+            echo
+            echo "Перед вливанием разберите изменения (можно попросить Claude). Вливать обычным merge, не squash."
+            echo
+
+            if ! git merge-tree --write-tree HEAD "$UP" >/dev/null 2>&1; then
+              echo "### ⚠️ Конфликты с правками форка"
+              echo "Автоматически влить не получится — конфликты нужно разрешить вручную."
+              echo
+            fi
+
+            NEW_LINKS="$(git diff "HEAD...$UP" | grep -E '^\+.*GubernievS/AntiZapret-VPN' | grep -vE '^\+\+\+' || true)"
+            if [[ -n "$NEW_LINKS" ]]; then
+              echo "### ⚠️ Новые ссылки на репозиторий автора"
+              echo "После вливания их нужно перевести на форк, иначе сервер начнёт брать это у автора:"
+              echo '```'
+              echo "$NEW_LINKS" | head -n 50
+              echo '```'
+              echo
+            fi
+
+            echo "### Коммиты"
+            git log --no-merges --date=short --format='- `%h` %ad %s' "HEAD..$UP" | head -n 100
+            echo
+            echo "### Изменённые файлы"
+            echo '```'
+            git diff --stat=100 "HEAD...$UP" | tail -n 60
+            echo '```'
+          } > pr-body.md
+
+          TITLE="Обновления от автора: $NEW коммит(ов)"
+          PR="$(gh pr list --head "$SYNC_BRANCH" --base "$BASE_BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [[ -n "$PR" ]]; then
+            gh pr edit "$PR" --title "$TITLE" --body-file pr-body.md
+            echo "Обновлён pull request #$PR"
+          else
+            gh pr create --head "$SYNC_BRANCH" --base "$BASE_BRANCH" --title "$TITLE" --body-file pr-body.md
+          fi
