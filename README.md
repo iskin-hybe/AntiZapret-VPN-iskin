@@ -1,5 +1,7 @@
 # AntiZapret VPN + полный VPN
 
+> Форк [GubernievS/AntiZapret-VPN](https://github.com/GubernievS/AntiZapret-VPN). Установка и ежедневные обновления скриптов и списков идут из этого репозитория (ветка `main`), а не из оригинала.
+
 | У автора есть собственный VPN-сервер. Вы можете приобрести готовое подключение к AntiZapret VPN или получить помощь в настройке своего сервера или роутера. Все подробности и стоимость [тут](https://t.me/antizapret_vpn) |
 |------------------|
 
@@ -76,7 +78,7 @@ VPN-клиенты: [AmneziaWG (Windows)](https://github.com/amnezia-vpn/amnezia
 1. Устанавливать на Ubuntu 24.04 или Debian 13 или новее, рекомендуется Ubuntu 24.04
 2. Для установки или обновления в терминале под root выполнить
 ```
-bash <(wget -qO- --no-hsts --inet4-only https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup.sh)
+bash <(wget -qO- --no-hsts --inet4-only https://raw.githubusercontent.com/iskin-hybe/AntiZapret-VPN-iskin/main/setup.sh)
 ```
 3. Изменить настройки (или нажимать Enter для выбора значения по умолчанию):
 	- Установить патч для обхода блокировки протокола OpenVPN (только для UDP соединений)
@@ -211,7 +213,7 @@ WireGuard/AmneziaWG на роутерах [Keenetic](https://4pda.to/forum/index
 1. Устанавливать на Ubuntu 22.04 или Debian 12 или новее, рекомендуется Ubuntu 24.04
 2. Для установки или обновления в терминале под root выполнить
 ```
-bash <(wget -qO- --no-hsts --inet4-only https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/proxy.sh)
+bash <(wget -qO- --no-hsts --inet4-only https://raw.githubusercontent.com/iskin-hybe/AntiZapret-VPN-iskin/main/proxy.sh)
 ```
 3. Ввести IPv4-адрес сервера АнтиЗапрета
 4. Заменить в профилях подключения IPv4-адрес/домен АнтиЗапрета на новый IPv4-адрес/домен прокси-сервера

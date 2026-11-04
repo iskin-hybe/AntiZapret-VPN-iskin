@@ -2,7 +2,8 @@
 #
 # Скрипт для установки на своём сервере AntiZapret VPN + полный VPN
 #
-# https://github.com/GubernievS/AntiZapret-VPN
+# https://github.com/iskin-hybe/AntiZapret-VPN-iskin
+# Форк https://github.com/GubernievS/AntiZapret-VPN
 #
 export LC_ALL=C
 
@@ -88,7 +89,7 @@ fi
 echo
 echo -e '\e[1;32mInstalling AntiZapret VPN + full VPN...\e[0m'
 echo 'OpenVPN + WireGuard + AmneziaWG'
-echo 'More details: https://github.com/GubernievS/AntiZapret-VPN'
+echo 'More details: https://github.com/iskin-hybe/AntiZapret-VPN-iskin'
 echo
 
 echo 'Detecting path MTU via ping to Cloudflare WARP (engage.cloudflareclient.com)...'
@@ -507,7 +508,7 @@ PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --force-reinstall --user /tmp
 
 # Клонируем репозиторий antizapret
 rm -rf /tmp/antizapret
-git clone --depth 1 https://github.com/GubernievS/AntiZapret-VPN.git /tmp/antizapret
+git clone --depth 1 https://github.com/iskin-hybe/AntiZapret-VPN-iskin.git /tmp/antizapret
 
 # Сохраняем пользовательские настройки и обработчики custom*.sh
 cp /root/antizapret/config/*.txt /tmp/antizapret/setup/root/antizapret/config/ || true

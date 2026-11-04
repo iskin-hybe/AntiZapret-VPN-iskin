@@ -68,7 +68,7 @@ echo '    OpenVPN UDP/TCP:       80, 443, 504, 508, 50080, 50443'
 echo '    WireGuard/AmneziaWG:   540, 580, 51080, 51443, 52080, 52443'
 echo "    SSH OpenVPN:           $OPENVPN_SSH"
 echo "    SSH WireGuard:         $WIREGUARD_SSH"
-echo 'More details: https://github.com/GubernievS/AntiZapret-VPN'
+echo 'More details: https://github.com/iskin-hybe/AntiZapret-VPN-iskin'
 echo
 
 # Спрашиваем о настройках
