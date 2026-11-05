@@ -1,12 +1,15 @@
 """Нормализация выгрузки Telegram: анонимизация авторов и вычистка секретов.
 
-Запуск: python3 -I normalize.py <result.json> <out_dir>
+Запуск: python3 -I normalize.py <result.json> <out_dir> [from_id=МЕТКА ...]
+Необязательные пары from_id=МЕТКА дают особые метки (например, сотрудникам хостера:
+channel2142793587=ХОСТЕР). from_id берётся из поля from_id выгрузки.
 Пишет: all.txt (все сообщения), by-month/YYYY-MM.txt, stats.txt.
 Карта ников НЕ сохраняется на диск — только условные метки.
 """
 import json, re, sys, os, collections
 
 src, out = sys.argv[1], sys.argv[2]
+special = dict(a.split("=", 1) for a in sys.argv[3:])
 os.makedirs(os.path.join(out, "by-month"), exist_ok=True)
 d = json.load(open(src, encoding="utf-8"))
 msgs = [m for m in d["messages"] if m.get("type") == "message"]
@@ -48,7 +51,9 @@ author_id = next((m.get("from_id") for m in msgs if (m.get("from") or "") == "Gu
 label = {}
 n = 0
 for fid, _ in counts.most_common():
-    if fid == author_id:
+    if fid in special:
+        label[fid] = special[fid]
+    elif fid == author_id:
         label[fid] = "АВТОР"
     else:
         n += 1
