@@ -33,9 +33,11 @@ if ss -ltn 'sport = :443' | grep -q LISTEN && ! systemctl -q is-active xray-rela
     echo "TCP 443 уже занят:"; ss -ltnp 'sport = :443'; exit 1
 fi
 
-# На свежем VPS apt может быть занят фоновыми обновлениями или прерван
-while pgrep -x apt-get >/dev/null || pgrep -x dpkg >/dev/null || pgrep -f unattended-upgrade >/dev/null; do
-    echo "Жду завершения фоновых обновлений..."; sleep 5
+# На свежем VPS apt может быть занят фоновыми обновлениями или прерван.
+# Ждём освобождения блокировки dpkg (pgrep по имени не годится: unattended-upgrade-shutdown висит всегда).
+systemctl stop apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true
+while fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock >/dev/null 2>&1; do
+    echo "Жду освобождения dpkg..."; sleep 5
 done
 dpkg --configure -a
 apt-get install -y -qq wireguard-tools nginx certbot qrencode </dev/null >/dev/null
