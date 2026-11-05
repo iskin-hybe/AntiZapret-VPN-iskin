@@ -33,6 +33,11 @@ if ss -ltn 'sport = :443' | grep -q LISTEN && ! systemctl -q is-active xray-rela
     echo "TCP 443 уже занят:"; ss -ltnp 'sport = :443'; exit 1
 fi
 
+# На свежем VPS apt может быть занят фоновыми обновлениями или прерван
+while pgrep -x apt-get >/dev/null || pgrep -x dpkg >/dev/null || pgrep -f unattended-upgrade >/dev/null; do
+    echo "Жду завершения фоновых обновлений..."; sleep 5
+done
+dpkg --configure -a
 apt-get install -y -qq wireguard-tools nginx certbot qrencode </dev/null >/dev/null
 
 # 1. Туннель WireGuard до основного сервера (клиент полного VPN «relay»)
