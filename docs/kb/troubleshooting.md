@@ -92,19 +92,8 @@ _Выжимка из чата проекта (2026-01-01 — 2026-11-05). Акт
 - **Статус OpenVPN** (файл статуса по умолчанию выключен, включается опцией `OPENVPN_LOG`): `echo "status" | socat - UNIX-CONNECT:/run/openvpn-server/antizapret-udp.sock` (для полного VPN — `vpn-udp.sock`). Опрашивайте нечасто, иначе OpenVPN может упасть [АВТОР] (#90938, #90941, #99361).
 - **Версия OpenVPN и DCO:** в `openvpn --version` должна быть `[DCO]`, а строка «DCO version» не должна быть N/A [АВТОР] (#69172, #97922).
 - **DNS:** `dig <домен> @127.1.1.1` (АЗ) / `@127.2.2.2` (VPN), `systemctl status kresd@1`, `tcpdump -i any -n src host <VPN-IP клиента> and port 53`. На клиенте `ping <домен из списка>` должен вернуть фейковый IP. Подробнее — в [dns.md](dns.md#отладка) [АВТОР] (#68500, #75155, #88037).
-- **Журналы:**
-  - `journalctl -u antizapret` — запуск и WARP;
-  - `journalctl | grep 'No buffer space available'` — баг #1048;
-  - логи OpenVPN — `verb 4–5`; файлы больше 100 МБ в `/etc/openvpn/server/logs` doall удаляет ежедневно [АВТОР] (#70390, #86891, #90320).
-- **WARP:**
-  - подключение идёт через маршрут по умолчанию: `ip route get $(dig engage.cloudflareclient.com +short)`;
-  - какой MTU пролезает — циклом `ping -I warp-antizapret -M do -s <размер>` [АВТОР] (#96635, #99644).
-- **Доступность сервера снаружи** [АВТОР + польз.] (#64013, #91321, #94933, #95725, #99305):
-  - traceroute — где обрывается;
-  - platform.censys.io — снаружи должен быть виден только порт 22;
-  - check-host.net, cheburcheck.ru;
-  - онлайн-чекеры ТСПУ ненадёжны: при белом списке на порт покажут 0, хотя всё работает.
-- **С VPS:** `nc -vz api.telegram.org 443` — доступен ли Telegram (#91310). Узел кэша Google — `redirector.googlevideo.com/report_mapping?di=no` [АВТОР] (#60871).
-- **Какие домены и IP использует сайт или приложение:**
-  - ipvfoo (ПК), PCAPdroid (Android);
-  - Discord — сборка PTB, `Ctrl+Shift+I`, фильтр «Creating connection to» [АВТОР] (#84474, #89544, #91845).
+- **Журналы:** `journalctl -u antizapret` (запуск и WARP), `journalctl | grep 'No buffer space available'` (баг #1048). Логи OpenVPN — `verb 4–5`; файлы больше 100 МБ в `/etc/openvpn/server/logs` doall удаляет ежедневно [АВТОР] (#70390, #86891, #90320).
+- **WARP:** подключение идёт через маршрут по умолчанию — `ip route get $(dig engage.cloudflareclient.com +short)`; какой MTU пролезает — циклом `ping -I warp-antizapret -M do -s <размер>` [АВТОР] (#96635, #99644).
+- **Доступность сервера снаружи:** traceroute (где обрывается), platform.censys.io (снаружи должен быть виден только порт 22), check-host.net, cheburcheck.ru. Онлайн-чекеры ТСПУ ненадёжны: при белом списке на порт покажут 0, хотя всё работает [АВТОР + польз.] (#64013, #91321, #94933, #95725, #99305).
+- **С VPS:** `nc -vz api.telegram.org 443` — доступен ли Telegram (#91310); узел кэша Google — `redirector.googlevideo.com/report_mapping?di=no` [АВТОР] (#60871).
+- **Какие домены использует сайт:** ipvfoo (ПК), PCAPdroid (Android); для Discord — сборка PTB, `Ctrl+Shift+I`, фильтр «Creating connection to» [АВТОР] (#84474, #89544, #91845).
