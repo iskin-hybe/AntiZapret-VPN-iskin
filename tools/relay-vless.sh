@@ -12,8 +12,11 @@
 #   bash relay-vless.sh <IPv4_основного_сервера> <домен_релея> [имя_клиента, по умолчанию relay]
 #
 # Повторный запуск выдаёт новые ключи VLESS (старые ссылки перестают работать), туннель не трогает.
-# Отпечаток TLS в ссылке — firefox: приветствия Chrome/Safari/iOS (с ML-KEM, ~1,8 КБ) на части сетей
-# не проходят, соединения застревают на первых 1440 байтах (см. docs/kb/our-experience.md).
+# Отпечаток TLS в ссылке — firefox: приветствия Chrome/Safari/iOS на части сетей не проходят,
+# соединения застревают на первых 1440 байтах (см. docs/kb/our-experience.md).
+#
+# Основная ссылка — по IP и без SNI: так подключается платный VPN, который работает на Yota
+# (в его ClientHello нет SNI). Запасная — с SNI домена релея.
 #
 set -eu
 MAIN="${1:?Укажи IPv4 основного сервера: bash relay-vless.sh <IP> <домен> [клиент]}"
@@ -148,7 +151,7 @@ cat > /etc/xray-relay/config.json <<CFG
         "security": "reality",
         "realitySettings": {
           "target": "127.0.0.1:8443",
-          "serverNames": [ "$DOMAIN" ],
+          "serverNames": [ "", "$DOMAIN" ],
           "privateKey": "$PRIV",
           "shortIds": [ "$SID" ]
         }
@@ -212,12 +215,12 @@ else
     echo "ВНИМАНИЕ: сайт через 443 не открылся"
 fi
 
-Q="encryption=none&flow=xtls-rprx-vision&security=reality&sni=$DOMAIN&fp=$FP&pbk=$PUB&sid=$SID&type=tcp"
-LINK="vless://$ID@$DOMAIN:443?$Q#Relay-VLESS"
+Q="encryption=none&flow=xtls-rprx-vision&security=reality&fp=$FP&pbk=$PUB&sid=$SID&type=tcp"
+LINK="vless://$ID@$IP:443?$Q#Relay-noSNI"
 echo
-echo "Ссылка для приложения (через домен релея):"
+echo "Ссылка для приложения (по IP, без SNI):"
 echo "$LINK"
 echo
-echo "Запасная (через IP): vless://$ID@$IP:443?$Q#Relay-VLESS-IP"
+echo "Запасная (домен релея в SNI): vless://$ID@$DOMAIN:443?$Q&sni=$DOMAIN#Relay-SNI"
 echo
 qrencode -t ansiutf8 "$LINK"
