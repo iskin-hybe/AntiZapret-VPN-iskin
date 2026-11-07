@@ -8,7 +8,8 @@
 #   2. На основном сервере создан клиент WireGuard: /root/antizapret/client.sh 4 <имя_клиента>
 #      (профиль берётся из /root/antizapret/client/wireguard/vpn/vpn-<имя_клиента>-*-wg.conf по scp).
 #
-# Запуск на релее (Ubuntu 24.04):
+# Запуск на релее (лучше Ubuntu 26.04: её OpenSSL 3.5 умеет постквантовый обмен ключами ML-KEM, см. ниже;
+# на 24.04 тоже работает):
 #   bash relay-vless.sh <IPv4_основного_сервера> <домен_релея> [имя_клиента, по умолчанию relay]
 #
 # Повторный запуск выдаёт новые ключи VLESS (старые ссылки перестают работать), туннель не трогает.
@@ -17,6 +18,10 @@
 #
 # Основная ссылка — по IP и без SNI: так подключается платный VPN, который работает на Yota
 # (в его ClientHello нет SNI). Запасная — с SNI домена релея.
+#
+# REALITY копирует параметры рукопожатия у сайта-приманки (nginx на 127.0.0.1:8443). У платного VPN
+# сервер отвечает Firefox-у ключом X25519MLKEM768 и шифром AES-128-GCM. Чтобы отвечать так же, nginx
+# выбирает шифр по предпочтению клиента, а ML-KEM появляется только с OpenSSL 3.5+ (Ubuntu 26.04).
 #
 set -eu
 MAIN="${1:?Укажи IPv4 основного сервера: bash relay-vless.sh <IP> <домен> [клиент]}"
@@ -98,6 +103,8 @@ server {
     ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+$CURVES
     root /var/www/$DOMAIN;
     index index.html;
 }
@@ -108,11 +115,22 @@ nginx -t -q
 systemctl enable -q nginx
 systemctl reload-or-restart nginx
 }
+CURVES=""
+OSSL="$(openssl version | awk '{print $2}')"
+if [ "$(printf '%s\n' 3.5 "$OSSL" | sort -V | head -1)" = 3.5 ]; then
+    CURVES="    ssl_ecdh_curve X25519MLKEM768:X25519:prime256v1:secp384r1;"
+else
+    echo "ВНИМАНИЕ: OpenSSL $OSSL не умеет ML-KEM, сервер будет отвечать обычным X25519 (у платного VPN — X25519MLKEM768). Лучше Ubuntu 26.04."
+fi
 write_nginx
 certbot certonly --webroot -w "/var/www/$DOMAIN" -d "$DOMAIN" --agree-tos \
     --register-unsafely-without-email -n --keep-until-expiring \
     --deploy-hook "systemctl reload nginx"
 write_nginx tls
+# Что приманка отвечает клиенту с порядком шифров как у Firefox (REALITY повторит то же самое)
+openssl s_client -connect 127.0.0.1:8443 -servername "$DOMAIN" \
+    -ciphersuites TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384 </dev/null 2>/dev/null \
+    | grep -E 'Negotiated TLS1.3 group|Server Temp Key|Cipher is' | sed 's/^/Приманка: /' || true
 
 # 3. Xray: VLESS + Reality на 443, весь трафик — в туннель до основного сервера
 if [ ! -x /usr/local/bin/xray ]; then
