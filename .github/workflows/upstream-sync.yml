@@ -82,10 +82,10 @@ jobs:
           } > pr-body.md
 
           TITLE="Обновления от автора: $NEW коммит(ов)"
-          PR="$(gh pr list --head "$SYNC_BRANCH" --base "$BASE_BRANCH" --state open --json number --jq '.[0].number // empty')"
+          PR="$(gh pr list -R "$GITHUB_REPOSITORY" --head "$SYNC_BRANCH" --base "$BASE_BRANCH" --state open --json number --jq '.[0].number // empty')"
           if [[ -n "$PR" ]]; then
-            gh pr edit "$PR" --title "$TITLE" --body-file pr-body.md
+            gh pr edit -R "$GITHUB_REPOSITORY" "$PR" --title "$TITLE" --body-file pr-body.md
             echo "Обновлён pull request #$PR"
           else
-            gh pr create --head "$SYNC_BRANCH" --base "$BASE_BRANCH" --title "$TITLE" --body-file pr-body.md
+            gh pr create -R "$GITHUB_REPOSITORY" --head "$SYNC_BRANCH" --base "$BASE_BRANCH" --title "$TITLE" --body-file pr-body.md
           fi
